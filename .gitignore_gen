@@ -1,0 +1,2 @@
+#!/bin/bash
+gibo Vim Emacs Rust > .gitignore
