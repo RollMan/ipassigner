@@ -1,0 +1,13 @@
+[package]
+name = "ipassigner"
+version = "0.0.1"
+authors = ["rollman054 <@rollman054>"]
+
+[dependencies]
+regex = "*"
+
+[dependencies.nickel]
+version = "*"
+
+# [dependencies.nickel_postgres]
+# git = "https://github.com/nickel-org/nickel-postgres.git"
