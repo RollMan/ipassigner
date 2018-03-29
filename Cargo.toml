@@ -5,9 +5,12 @@ authors = ["rollman054 <@rollman054>"]
 
 [dependencies]
 regex = "*"
+r2d2 = "*"
+postgres = "*"
+openssl = "*"
 
 [dependencies.nickel]
 version = "*"
 
-# [dependencies.nickel_postgres]
-# git = "https://github.com/nickel-org/nickel-postgres.git"
+[dependencies.nickel_postgres]
+git = "https://github.com/nickel-org/nickel-postgres.git"
