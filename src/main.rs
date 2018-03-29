@@ -1,20 +1,33 @@
-extern crate regex;
-extern crate nickel;
+extern crate postgres;
 
-use nickel::Nickel;
-use nickel::{Request, Response, MiddlewareResult, HttpRouter};
-use regex::Regex;
+use postgres::{Connection, SslMode};
 
-fn status<'mw, 'conn>(request: &mut Request<'mw, 'conn>, res: Response<'mw>) -> MiddlewareResult<'mw>{
-    let username = request.param("username").unwrap();
-    let operation = request.param("operation").unwrap();
-
-    res.send( format!("{} requested {}.", username, operation) )
+struct Person {
+    id: i32,
+    name: String,
+    data: Option<Vec<u8>>,
 }
 
-fn main(){
-    let mut server = Nickel::new();
-
-    server.get(Regex::new("/api/v1/status/(?P<username>[a-zA-Z0-9]+)/(?P<operation>(request|list|return))").unwrap(), status);
-    server.listen("127.0.0.1:8080");
+fn main() {
+    let conn = Connection::connect("postgres://postgres:test@172.17.0.2:5432", SslMode::None).unwrap();
+    conn.execute("CREATE TABLE person (
+                    id              SERIAL PRIMARY KEY,
+                    name            VARCHAR NOT NULL,
+                    data            BYTEA
+                  )", &[]).unwrap();
+    let me = Person {
+        id: 0,
+        name: "Steven".to_string(),
+        data: None,
+    };
+    conn.execute("INSERT INTO person (name, data) VALUES ($1, $2)",
+                 &[&me.name, &me.data]).unwrap();
+    for row in &conn.query("SELECT id, name, data FROM person", &[]).unwrap() {
+        let person = Person {
+            id: row.get(0),
+            name: row.get(1),
+            data: row.get(2),
+        };
+        println!("Found person {}", person.name);
+    }
 }
