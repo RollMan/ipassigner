@@ -1,2 +1,3 @@
 #!/bin/bash
-gibo Vim Emacs Rust > .gitignore
+echo "tmp/" > .gitignore
+gibo Vim Emacs Rust >> .gitignore
