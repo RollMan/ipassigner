@@ -8,4 +8,4 @@ create table users (
 );
 
 
-COPY users (name student_id) FROM 'users.csv' WITH CSV
+COPY users (name, student_id) FROM 'users.csv' WITH CSV

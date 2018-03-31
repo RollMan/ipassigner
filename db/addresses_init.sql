@@ -8,4 +8,4 @@ create table addresses (
 );
 
 
-COPY users (address, user_id) FROM 'addresses.csv' WITH CSV
+COPY addresses (address, user_id) FROM 'addresses.csv' WITH CSV
