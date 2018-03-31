@@ -14,13 +14,9 @@ use regex::Regex;
 use postgres::{Connection, TlsMode};
 use rustc_serialize::json::{Json, ToJson};
 
-lazy_static! {
-    static ref ADDR_DB: Arc<Mutex<Connection>> = Arc::new( Mutex::new(Connection::connect("postgres://postgres:test@172.17.0.2:5432/addresses", TlsMode::None).unwrap() ));
-}
-lazy_static! {
-    static ref USER_DB: Arc<Mutex<Connection>> = Arc::new( Mutex::new(Connection::connect("postgres://postgres:test@172.17.0.2:5432/users", TlsMode::None).unwrap() ));
-}
-
+static DB_URI: &'static str = "postgres://postgres:test@127.17.0.2/";
+static DB_NAME_ADDR: &'static str = "addresses";
+static DB_NAME_USER: &'static str = "users";
 
 struct Address {
     address: String,
@@ -75,8 +71,8 @@ fn status<'mw, 'conn>(request: &mut Request<'mw, 'conn>, res: Response<'mw>) -> 
     let operation = request.param("operation").unwrap();
     let mut res_status: StatusResult = StatusResult{success: false, operation: String::new(), address: String::new()};
 
-    let addr_db = ADDR_DB.lock().unwrap();
-    let user_db = USER_DB.lock().unwrap();
+    let addr_db = Connection::connect(DB_URI.to_owned() + DB_NAME_ADDR, TlsMode::None).unwrap();
+    let user_db = Connection::connect(DB_URI.to_owned() + DB_NAME_USER, TlsMode::None).unwrap();
 
     if operation == "request" {
         let available_addresses = addr_db.query("SELECT * FROM addresses WHERE user_id IS NULL", &[]).unwrap();
