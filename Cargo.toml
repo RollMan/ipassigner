@@ -9,3 +9,6 @@ regex = "*"
 r2d2 = "*"
 postgres = "*"
 openssl = "*"
+
+rustc-serialize = "0.3.24"
+lazy_static = "1.0"

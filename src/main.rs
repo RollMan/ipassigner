@@ -2,14 +2,25 @@ extern crate regex;
 extern crate nickel;
 extern crate postgres;
 extern crate rustc_serialize;
+#[macro_use]
+extern crate lazy_static;
 
 use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
 use nickel::Nickel;
 use nickel::{Request, Response, MiddlewareResult, HttpRouter, JsonBody, MediaType};
-use nickel::status::StatusCOde;
+use nickel::status::StatusCode;
 use regex::Regex;
-use postgres::{Connection, SslMode};
+use postgres::{Connection, TlsMode};
 use rustc_serialize::json::{Json, ToJson};
+
+lazy_static! {
+    static ref ADDR_DB: Arc<Mutex<Connection>> = Arc::new( Mutex::new(Connection::connect("postgres://postgres:test@172.17.0.2:5432/addresses", TlsMode::None).unwrap() ));
+}
+lazy_static! {
+    static ref USER_DB: Arc<Mutex<Connection>> = Arc::new( Mutex::new(Connection::connect("postgres://postgres:test@172.17.0.2:5432/users", TlsMode::None).unwrap() ));
+}
+
 
 struct Address {
     address: String,
@@ -21,7 +32,7 @@ impl ToJson for Address {
     fn to_json(&self) -> Json{
         let mut map = BTreeMap::new();
         map.insert("address".to_string(), self.address.to_json());
-        map.insert("user_name".to_string(), self.user_name.to_json());
+        map.insert("user_id".to_string(), self.user_id.to_json());
         map.insert("user_history".to_string(), self.user_history.to_json());
         Json::Object(map)
     }
@@ -52,52 +63,47 @@ struct StatusResult{
 impl ToJson for StatusResult {
     fn to_json(&self) -> Json{
         let mut map = BTreeMap::new();
-        map.insert("success".to_string, self.success.to_json());
-        map.insert("operation".to_string, self.operation.to_json());
-        map.insert("address".to_string, self.address.to_json());
-        JSON::Object(map)
+        map.insert("success".to_string(), self.success.to_json());
+        map.insert("operation".to_string(), self.operation.to_json());
+        map.insert("address".to_string(), self.address.to_json());
+        Json::Object(map)
     }
 }
 
-fn status(addr_db: &Connection, user_db: &Connection) -> for<'r, 'mw, 'conn> fn (&mut Request<'mw, 'conn>, Response<'mw>) -> MiddlewareResult<'mw>{
+fn status<'mw, 'conn>(request: &mut Request<'mw, 'conn>, res: Response<'mw>) -> MiddlewareResult<'mw>{
+    let userid = request.param("username").unwrap();
+    let operation = request.param("operation").unwrap();
+    let mut res_status: StatusResult = StatusResult{success: false, operation: String::new(), address: String::new()};
 
-    fn status_<'mw, 'conn>(request: &mut Request<'mw, 'conn>, res: Response<'mw>) -> MiddlewareResult<'mw>{
-        let userid = request.param("username").unwrap();
-        let operation = request.param("operation").unwrap();
-        let mut res_status: StatusResult;
+    let addr_db = ADDR_DB.lock().unwrap();
+    let user_db = USER_DB.lock().unwrap();
 
-        if(operation == "request"){
-            let available_addresses = addr_db.query("SELECT * FROM addresses WHERE user_id IS NULL", &[]).unwrap();
-            if(available_addresses.is_epmry()){
-                return res.send("{success: false}");
-            }
-            let mut entry: postgres::Row = available_addresses[0];
-            let address = entry.get(0);
-            let user_id = entry.get(1);
-            addr_db.execute("UPDATE addresses SET column = $1 WHERE address = $2", &[&use_id, &address]);
-
-            res_status = StatusResult(true, operation, address);
-        }else if(operation == "list"){
-
-        }else if(operation == "return"){
-
-        }else{
-            return res.error(StatusCOde::BadRequest, "No such operation");
+    if operation == "request" {
+        let available_addresses = addr_db.query("SELECT * FROM addresses WHERE user_id IS NULL", &[]).unwrap();
+        if available_addresses.is_empty() {
+            return res.send("{success: false}");
         }
-        res_status.to_json();
-    }
+        let mut entry: postgres::rows::Row = available_addresses.get(0);
+        let address: String = entry.get(0);
+        let user_id: i32 = entry.get(1);
+        addr_db.execute("UPDATE addresses SET column = $1 WHERE address = $2", &[&user_id, &address]);
 
-    let res = status_;
-    return res;
+        res_status = StatusResult{success: true, operation: String::from(operation), address: address};
+    }else if operation == "list" {
+
+    }else if operation == "return" {
+
+    }else{
+        return res.error(StatusCode::BadRequest, "No such operation");
+    }
+    res.send(res_status.to_json())
 }
 
 fn main(){
-    let addr_db = Connection::connect("postgres://username:passwd@host:port/database", SslMode::None).unwrap();
-    let user_db = Connection::connect("postgres://username:passwd@host:port/database", SslMode::None).unwrap();
 
 
     let mut server = Nickel::new();
 
-    server.get(Regex::new("/api/v1/status/(?P<username>[a-zA-Z0-9]+)/(?P<operation>(request|list|return))").unwrap(), (status(&addr_db, &user_db)));
+    server.get(Regex::new("/api/v1/status/(?P<username>[a-zA-Z0-9]+)/(?P<operation>(request|list|return))").unwrap(), status);
     server.listen("127.0.0.1:8080");
 }
