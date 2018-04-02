@@ -10,13 +10,13 @@ use std::sync::{Arc, Mutex};
 use nickel::Nickel;
 use nickel::{Request, Response, MiddlewareResult, HttpRouter, JsonBody, MediaType};
 use nickel::status::StatusCode;
+use nickel::QueryString;
 use regex::Regex;
 use postgres::{Connection, TlsMode};
 use rustc_serialize::json::{Json, ToJson};
 
-static DB_URI: &'static str = "postgres://postgres:test@127.17.0.2/";
-static DB_NAME_ADDR: &'static str = "addresses";
-static DB_NAME_USER: &'static str = "users";
+static DB_URI: &'static str = "postgres://postgres:test@127.17.0.2:5432/";
+static DB_NAME: &'static str = "asl";
 
 struct Address {
     address: String,
@@ -53,7 +53,7 @@ impl ToJson for User {
 struct StatusResult{
     success: bool,
     operation: String,
-    address: String,
+    address: Vec<String>,
 }
 
 impl ToJson for StatusResult {
@@ -67,28 +67,39 @@ impl ToJson for StatusResult {
 }
 
 fn status<'mw, 'conn>(request: &mut Request<'mw, 'conn>, res: Response<'mw>) -> MiddlewareResult<'mw>{
-    let userid = request.param("username").unwrap();
-    let operation = request.param("operation").unwrap();
-    let mut res_status: StatusResult = StatusResult{success: false, operation: String::new(), address: String::new()};
+    //let userid = request.param("username").unwrap().parse::<i32>().unwrap();
+    //let operation = request.param("operation").unwrap();
+    let mut res_status: StatusResult = StatusResult{success: false, operation: String::new(), address: Vec::new()};
 
-    let addr_db = Connection::connect(DB_URI.to_owned() + DB_NAME_ADDR, TlsMode::None).unwrap();
-    let user_db = Connection::connect(DB_URI.to_owned() + DB_NAME_USER, TlsMode::None).unwrap();
+    let db = Connection::connect(DB_URI.to_owned() + DB_NAME, TlsMode::None).unwrap();
 
-    if operation == "request" {
-        let available_addresses = addr_db.query("SELECT * FROM addresses WHERE user_id IS NULL", &[]).unwrap();
+    if request.param("operation").unwrap() == "request" {
+        let available_addresses = db.query("SELECT * FROM addresses WHERE user_id IS NULL", &[]).unwrap();
         if available_addresses.is_empty() {
-            return res.send("{success: false}");
+            // return res.send("{success: false}");
         }
-        let mut entry: postgres::rows::Row = available_addresses.get(0);
+        let entry: postgres::rows::Row = available_addresses.get(0);
         let address: String = entry.get(0);
-        let user_id: i32 = entry.get(1);
-        addr_db.execute("UPDATE addresses SET column = $1 WHERE address = $2", &[&user_id, &address]);
+        //let user_id: i32 = entry.get(1);
+        let userid =request.param("username").unwrap().parse::<i32>().unwrap(); 
+        db.execute("UPDATE addresses SET user_id = $1 WHERE address = $2", &[&userid, &address]).unwrap();
 
-        res_status = StatusResult{success: true, operation: String::from(operation), address: address};
-    }else if operation == "list" {
-
-    }else if operation == "return" {
-
+        res_status = StatusResult{success: true, operation: String::from("request"), address: vec![address]};
+    }else if request.param("operation").unwrap() == "list" {
+        let userid =request.param("username").unwrap().parse::<i32>().unwrap(); 
+        let list = db.query("SELECT address FROM addresses WHERE user_id = $1", &[&userid]).unwrap();
+        let mut addresses: Vec<String> = Vec::new();
+        for address in &list {
+            addresses.push(address.get(0));
+        }
+        res_status = StatusResult{success: true, operation: String::from("list"), address: addresses};
+    }else if request.param("operation").unwrap() == "return" {
+        let addr = request.query().get("addr");
+        match addr {
+            Some(addr) => {db.execute("UPDATE addresses SET user_id = NULL WHERE address = $1", &[&addr]).unwrap();},
+            None => ()
+        }
+        res_status = StatusResult{success: true, operation: String::from("return"), address: vec![addr.unwrap().to_string()]};
     }else{
         return res.error(StatusCode::BadRequest, "No such operation");
     }
@@ -101,5 +112,5 @@ fn main(){
     let mut server = Nickel::new();
 
     server.get(Regex::new("/api/v1/status/(?P<username>[a-zA-Z0-9]+)/(?P<operation>(request|list|return))").unwrap(), status);
-    server.listen("127.0.0.1:8080");
+    server.listen("127.0.0.1:8080").unwrap();
 }
