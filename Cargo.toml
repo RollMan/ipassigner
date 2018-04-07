@@ -1,0 +1,14 @@
+[package]
+name = "ipassigner"
+version = "0.0.1"
+authors = ["rollman054 <@rollman054>"]
+
+[dependencies]
+nickel = "*"
+regex = "*"
+r2d2 = "*"
+postgres = "*"
+openssl = "*"
+
+rustc-serialize = "0.3.24"
+lazy_static = "1.0"
