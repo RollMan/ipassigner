@@ -5,6 +5,7 @@ extern crate rustc_serialize;
 
 use std::collections::BTreeMap;
 use std::error::Error;
+use std::env;
 use nickel::Nickel;
 use nickel::{Request, Response, MiddlewareResult, HttpRouter};
 use nickel::status::StatusCode;
@@ -12,9 +13,6 @@ use nickel::QueryString;
 use regex::Regex;
 use postgres::{Connection, TlsMode};
 use rustc_serialize::json::{Json, ToJson};
-
-static DB_URI: &'static str = "postgres://postgres:test@127.17.0.2:5432/";
-static DB_NAME: &'static str = "asl";
 
 struct Address {
     address: String,
@@ -71,7 +69,11 @@ fn status<'mw, 'conn>(request: &mut Request<'mw, 'conn>, res: Response<'mw>) -> 
     //let operation = request.param("operation").unwrap();
     let mut res_status: StatusResult = StatusResult{success: false, operation: String::new(), address: Vec::new(), reason: String::new()};
 
-    let db = Connection::connect(DB_URI.to_owned() + DB_NAME, TlsMode::None).unwrap();
+    let DB_HOST = env::var("POSTGRES_SERVICE_HOST").unwrap();
+    //let DB_URI: &str = "postgres://postgres:test@127.17.0.2:5432/";
+    //let DB_NAME: &str = "asl";
+
+    let db = Connection::connect("postgres://postgres:test@".to_owned() + &DB_HOST[..] + ":5432/asl", TlsMode::None).unwrap();
 
     {
         let requesting_user_id = request.param("username").unwrap().parse::<i32>().unwrap();
