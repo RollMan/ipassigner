@@ -7,10 +7,10 @@ spec:
   template:
     metadata:
       labels:
-        app: deployment-example
+        app: deployment-ipassigner
     spec:
       containers:
         - name: ipassigner
-          image: ipassigner:0.0.2
+          image: 163.143.94.199:5000/rollman/ipassigner:0.0.2
           ports:
-            - containerPort: 80
+            - containerPort: 8080

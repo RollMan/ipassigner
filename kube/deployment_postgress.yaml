@@ -1,22 +1,22 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: postgres
+  name: ipassigner-postgres
   labels:
-    app: postgres
+    app: ipassigner-postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: ipassigner-postgres
   template:
     metadata:
       labels:
-        app: postgres
+        app: ipassigner-postgres
     spec:
       containers:
-        - image: postgres:10
-          name: postgres
+        - image: 163.143.94.199:5000/rollman/ipassigner_postgres:0.1.0
+          name: ipassigner-postgres
           ports:
             - containerPort: 5432
           env:

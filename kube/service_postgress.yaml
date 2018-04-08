@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres
+  name: ipassigner-postgres
   labels:
-    app: postgres
+    app: ipassigner-postgres
 spec:
   type: ClusterIP
   ports:
     - port: 5432
   selector:
-    app: postgres
+    app: ipassigner-postgres
