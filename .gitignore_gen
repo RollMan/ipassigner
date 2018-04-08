@@ -2,4 +2,5 @@
 echo "tmp/" > .gitignore
 echo "db/data" >> .gitignore
 echo "db/data_for_init" >> .gitignore
+echo "target/" >> .gitignore
 gibo Vim Emacs Rust >> .gitignore
