@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: deployment-ipassigner
 spec:
+  selector:
+    matchLabels:
+      app: deployment-ipassigner
   replicas: 1
   template:
     metadata:
