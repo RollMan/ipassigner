@@ -148,5 +148,5 @@ fn main(){
     let mut server = Nickel::new();
 
     server.get(Regex::new("/api/v1/status/(?P<username>[a-zA-Z0-9]+)/(?P<operation>(request|list|return))").unwrap(), status);
-    server.listen("127.0.0.1:8080").unwrap();
+    server.listen("0.0.0.0:8080").unwrap();
 }
