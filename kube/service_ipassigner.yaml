@@ -8,8 +8,5 @@ spec:
   - port: 8080
     targetPort: 8080
     protocol: TCP
-    nodePort: 30001
   selector:
     app: deployment-ipassigner
-
-

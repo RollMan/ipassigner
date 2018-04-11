@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: ipassigner
-          image: 163.143.94.199:5000/rollman/ipassigner:0.0.2
+          image: 163.143.94.199:5000/rollman/ipassigner:0.0.4
           ports:
             - containerPort: 8080
