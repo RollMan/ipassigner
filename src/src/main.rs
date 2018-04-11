@@ -69,7 +69,8 @@ fn status<'mw, 'conn>(request: &mut Request<'mw, 'conn>, res: Response<'mw>) -> 
     //let operation = request.param("operation").unwrap();
     let mut res_status: StatusResult = StatusResult{success: false, operation: String::new(), address: Vec::new(), reason: String::new()};
 
-    let DB_HOST = env::var("POSTGRES_SERVICE_HOST").unwrap();
+    //let DB_HOST = env::var("POSTGRES_SERVICE_HOST").unwrap();
+    let DB_HOST = env::var("IPASSIGNER_POSTGRES_SERVICE_HOST").unwrap();
     //let DB_URI: &str = "postgres://postgres:test@127.17.0.2:5432/";
     //let DB_NAME: &str = "asl";
 

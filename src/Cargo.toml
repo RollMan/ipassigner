@@ -1,6 +1,6 @@
 [package]
 name = "ipassigner"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["rollman054 <@rollman054>"]
 
 [dependencies]
