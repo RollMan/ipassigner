@@ -22,3 +22,23 @@ spec:
           env:
             - name: POSTGRES_PASSWORD
               value: "test"
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data"
+              name: postgres_volume
+      volumes:
+        -name: postgres_volume
+        persistentVolumeClaim:
+          claimName: claim
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claim1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: slow
+  resources:
+    requests:
+      storage: 2Gi

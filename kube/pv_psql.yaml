@@ -1,0 +1,15 @@
+# This yaml is deplicated
+# because dynamic volume will be applied.
+#
+#
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv_psql
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem # Default
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: 
