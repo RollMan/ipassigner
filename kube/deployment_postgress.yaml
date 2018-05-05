@@ -24,11 +24,11 @@ spec:
               value: "test"
           volumeMounts:
             - mountPath: "/var/lib/postgresql/data"
-              name: postgres_volume
+              name: postgres-volume
       volumes:
-        -name: postgres_volume
-        persistentVolumeClaim:
-          claimName: claim
+        - name: postgres-volume
+          persistentVolumeClaim:
+            claimName: claim1
 
 ---
 apiVersion: v1
